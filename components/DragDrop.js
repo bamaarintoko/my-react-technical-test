@@ -39,6 +39,7 @@ export const PetCard = ({ id, name }) => {
     const [{ isDragging }, dragRef] = useDrag({
         type: 'pet',
         item: { id, name },
+        end: (item) => console.log('item : ',item),
         collect: (monitor) => ({
             isDragging: monitor.isDragging()
         })
