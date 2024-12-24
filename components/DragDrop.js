@@ -1,97 +1,76 @@
 'use client'
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
-const ItemType = {
-    ITEM: "item",
-};
-
-const DraggableItem = ({ id, text, onDrop }) => {
-    console.log('ondrop : ', onDrop)
-    const [, dragRef] = useDrag({
-        type: ItemType.ITEM,
-        item: { id },
-    });
-
-    const [, dropRef] = useDrop({
-        accept: ItemType.ITEM,
-        drop: (item) => console.log('item : ', item),
-    });
-
-    return (
-        <div
-            ref={(node) => dragRef(dropRef(node))}
-            style={{
-                padding: "8px 16px",
-                margin: "8px",
-                backgroundColor: "#f0f0f0",
-                cursor: "move",
-                border: "1px solid #ccc",
-            }}
-        >
-            {text}
-        </div>
-    );
-};
 
 export const PetCard = ({ id, name }) => {
     const [{ isDragging }, dragRef] = useDrag({
         type: 'pet',
         item: { id, name },
-        end: (item) => console.log('item : ',item),
+        end: (item) => console.log('item : ', item),
         collect: (monitor) => ({
             isDragging: monitor.isDragging()
         })
     })
     return (
-        <div className='pet-card' ref={dragRef}>
+        <div className='border rounded-sm py-2 px-2' ref={dragRef}>
             {name}
-            {isDragging && '😱'}
+            {/* {isDragging && '😱'} */}
         </div>
     )
 }
-const Drop = () => {
-    const [basket, setBasket] = useState([])
+const Drop = ({ items, setItems, oppositeItems, setOppositeItems }) => {
+
     const [{ isOver }, dropRef] = useDrop({
-        accept: 'pet',
-        drop: (item) => setBasket((basket) =>
-            !basket.includes(item) ? [...basket, item] : basket),
+        accept: "pet",
+        drop: (item) => {
+            // Remove the item from the opposite list and add it to the current list
+            setOppositeItems(oppositeItems.filter((i) => i.id !== item.id));
+            if (!items.some((i) => i.id === item.id)) {
+                setItems([...items, item]);
+            }
+        },
         collect: (monitor) => ({
-            isOver: monitor.isOver()
-        })
-    })
+            isOver: monitor.isOver(),
+        }),
+    });
     return (
-        <div className='basket' ref={dropRef}>
-            Here
-            {basket.map(pet => <PetCard key={pet.id} id={pet.id} name={pet.name} />)}
-            {isOver && <div>Drop Here!</div>}
+        <div className='grow' ref={dropRef}>
+            {items.length === 0 && <div>Drop Here</div>}
+            {items.map((item) => (
+                <PetCard key={item.id} id={item.id} name={item.name} />
+            ))}
         </div>
     )
 }
-const PETS = [
-    { id: 1, name: 'dog' },
-    { id: 2, name: 'cat' },
-    { id: 3, name: 'fish' },
-    { id: 4, name: 'hamster' },
-]
+
 const DragDrop = () => {
-    const [items, setItems] = React.useState([
-        { id: 1, text: "Item 1" },
-        { id: 2, text: "Item 2" },
-        { id: 3, text: "Item 3" },
+    const [leftItems, setLeftItems] = useState([
+        { id: 1, name: "Dog" },
+        { id: 2, name: "Cat" },
+        { id: 3, name: "Fish" },
+        { id: 4, name: "Hamster" },
     ]);
-
-    const handleDrop = (id) => {
-        setItems((prevItems) => prevItems.filter((item) => item.id !== id));
-    };
-
+    const [rightItems, setRightItems] = useState([]);
 
     return (
         <DndProvider backend={HTML5Backend}>
             <div style={{ display: "flex", gap: "16px" }}>
-                {PETS.map(pet => <PetCard key={pet.y} draggable id={pet.id} name={pet.name} />)}
-                <Drop />
+                {/* Left Side */}
+                <Drop
+                    items={leftItems}
+                    setItems={setLeftItems}
+                    oppositeItems={rightItems}
+                    setOppositeItems={setRightItems}
+                />
+                {/* Right Side */}
+                <Drop
+                    items={rightItems}
+                    setItems={setRightItems}
+                    oppositeItems={leftItems}
+                    setOppositeItems={setLeftItems}
+                />
             </div>
         </DndProvider>
     );
